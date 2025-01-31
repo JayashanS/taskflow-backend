@@ -9,6 +9,8 @@ export interface IUser extends Document {
   password: string;
   role: "admin" | "user";
   isEnabled: boolean;
+  otp?: string | null;
+  otpExpiration?: Date | null;
 }
 
 const UserSchema: Schema = new Schema({
@@ -45,6 +47,14 @@ const UserSchema: Schema = new Schema({
   isEnabled: {
     type: Boolean,
     default: true,
+  },
+  otp: {
+    type: String,
+    default: null,
+  },
+  otpExpiration: {
+    type: Date,
+    default: null,
   },
 });
 
