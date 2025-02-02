@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import mongoose from "mongoose";
+import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes";
 import taskRoutes from "./routes/taskRoutes";
@@ -9,6 +10,7 @@ const port = process.env.PORT || 5000;
 
 const app: Application = express();
 app.use(express.json());
+app.use(cors({ origin: "http://localhost:4000" }));
 
 console.log("Starting TaskFlow server and connecting to MongoDB...");
 mongoose
