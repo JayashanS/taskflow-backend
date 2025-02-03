@@ -188,3 +188,40 @@ export const createMultipleUsers = async (req: Request, res: Response) => {
     res.status(400).json({ error: "Error creating users" });
   }
 };
+
+export const updateUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { firstName, lastName, email, mobileNumber, address, role } = req.body;
+
+  try {
+    const user = await User.findById(id);
+
+    if (user) {
+      user.firstName = firstName ?? user.firstName;
+      user.lastName = lastName ?? user.lastName;
+      user.email = email ?? user.email;
+      user.mobileNumber = mobileNumber ?? user.mobileNumber;
+      user.address = address ?? user.address;
+      user.role = role ?? user.role;
+
+      await user.save();
+      res.status(200).json({ message: "User updated successfully", user });
+    }
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

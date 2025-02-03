@@ -8,6 +8,8 @@ import {
   login,
   getUsersWithPagination,
   createMultipleUsers,
+  updateUser,
+  deleteUser,
 } from "../controllers/userController";
 import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
 
@@ -21,5 +23,7 @@ router.post("/reset", resetPassword);
 router.post("/login", login);
 router.get("/all-from", getUsersWithPagination);
 router.post("/many", createMultipleUsers);
+router.put("/update/:id", updateUser);
+router.delete("/delete/:id", deleteUser);
 
 export default router;
