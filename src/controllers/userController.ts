@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const createUser = async (req: Request, res: Response) => {
-  const { firstName, lastName, email, mobileNumber, address, password } =
+  const { firstName, lastName, email, mobileNumber, address, password, role } =
     req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -21,7 +21,8 @@ export const createUser = async (req: Request, res: Response) => {
       mobileNumber,
       address,
       password: hashedPassword,
-      role: userCount === 0 ? "admin" : "user",
+      //role: userCount === 0 ? "admin" : "user",
+      role,
     });
     await user.save();
     res.status(201).json(user);
@@ -47,7 +48,7 @@ export const inviteUser = async (req: Request, res: Response) => {
     if (existingUser) {
       existingUser.otp = otp;
       existingUser.otpExpiration = otpExpiration;
-      existingUser.isEnabled = false;
+      existingUser.isEnabled = true;
 
       await existingUser.save();
     }
@@ -151,12 +152,21 @@ export const getUsersWithPagination = async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    const users = await User.find({}).skip(skip).limit(limit);
+    const users = await User.find({})
+      .skip(skip)
+      .limit(limit)
+      .select("-password");
+
+    const modifiedUsers = users.map((user) => {
+      const userObj = user.toObject();
+      userObj.password = "Password restricted";
+      return userObj;
+    });
 
     const totalRecords = await User.countDocuments();
 
     res.status(200).json({
-      users,
+      users: modifiedUsers,
       totalRecords,
     });
   } catch (error) {
