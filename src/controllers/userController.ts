@@ -27,7 +27,9 @@ export const createUser = async (req: Request, res: Response) => {
     await user.save();
     res.status(201).json(user);
   } catch (error) {
-    res.status(400).json({ error: "Error creating user" });
+    res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "error" });
   }
 };
 
@@ -155,7 +157,8 @@ export const getUsersWithPagination = async (req: Request, res: Response) => {
     const users = await User.find({})
       .skip(skip)
       .limit(limit)
-      .select("-password");
+      .select("-password")
+      .sort({ _id: -1 });
 
     const modifiedUsers = users.map((user) => {
       const userObj = user.toObject();
@@ -233,5 +236,80 @@ export const deleteUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAllUserIds = async (req: Request, res: Response) => {
+  try {
+    const userIds = await User.find({}, { _id: 1 });
+    const ids = userIds.map((user) => user._id);
+
+    res.status(200).json(ids);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const getUsersByFilter = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { searchTerm } = req.query;
+
+    if (!searchTerm || typeof searchTerm !== "string") {
+      res.status(400).json({ message: "Please provide a valid search term." });
+      return;
+    }
+
+    const filter = {
+      $or: [
+        { firstName: { $regex: new RegExp(searchTerm, "i") } },
+        { lastName: { $regex: new RegExp(searchTerm, "i") } },
+        { email: { $regex: new RegExp(searchTerm, "i") } },
+      ],
+    };
+
+    const users = await User.find(filter).sort({ _id: -1 });
+
+    if (users.length === 0) {
+      res
+        .status(404)
+        .json({ message: "No users found matching the search term." });
+      return;
+    }
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const toggleIsEnabled = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+    user.isEnabled = !user.isEnabled;
+    await user.save();
+
+    res.status(200).json({
+      message: `User ${user.isEnabled ? "enabled" : "disabled"} successfully`,
+      isEnabled: user.isEnabled,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };

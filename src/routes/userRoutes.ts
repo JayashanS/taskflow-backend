@@ -10,6 +10,9 @@ import {
   createMultipleUsers,
   updateUser,
   deleteUser,
+  getAllUserIds,
+  getUsersByFilter,
+  toggleIsEnabled,
 } from "../controllers/userController";
 import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
 
@@ -25,5 +28,8 @@ router.get("/all-from", getUsersWithPagination);
 router.post("/many", createMultipleUsers);
 router.put("/update/:id", updateUser);
 router.delete("/delete/:id", deleteUser);
+router.get("/all-ids", getAllUserIds);
+router.get("/filter", getUsersByFilter);
+router.post("/toggle/:userId", toggleIsEnabled);
 
 export default router;
