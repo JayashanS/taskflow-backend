@@ -13,6 +13,8 @@ import {
   getAllUserIds,
   getUsersByFilter,
   toggleIsEnabled,
+  searchUser,
+  getAllUsersIDs,
 } from "../controllers/userController";
 import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
 
@@ -31,5 +33,7 @@ router.delete("/delete/:id", deleteUser);
 router.get("/all-ids", getAllUserIds);
 router.get("/filter", getUsersByFilter);
 router.post("/toggle/:userId", toggleIsEnabled);
+router.post("/search", searchUser);
+router.get("/id", getAllUsersIDs);
 
 export default router;

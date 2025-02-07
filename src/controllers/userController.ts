@@ -261,28 +261,28 @@ export const getUsersByFilter = async (
     const { searchTerm } = req.query;
 
     if (!searchTerm || typeof searchTerm !== "string") {
-      res.status(400).json({ message: "Please provide a valid search term." });
-      return;
+      const users = await User.find().sort({ _id: -1 });
+      res.status(200).json(users);
+    } else {
+      const filter = {
+        $or: [
+          { firstName: { $regex: new RegExp(searchTerm, "i") } },
+          { lastName: { $regex: new RegExp(searchTerm, "i") } },
+          { email: { $regex: new RegExp(searchTerm, "i") } },
+        ],
+      };
+
+      const users = await User.find(filter).sort({ _id: -1 });
+
+      if (users.length === 0) {
+        res
+          .status(404)
+          .json({ message: "No users found matching the search term." });
+        return;
+      }
+
+      res.status(200).json(users);
     }
-
-    const filter = {
-      $or: [
-        { firstName: { $regex: new RegExp(searchTerm, "i") } },
-        { lastName: { $regex: new RegExp(searchTerm, "i") } },
-        { email: { $regex: new RegExp(searchTerm, "i") } },
-      ],
-    };
-
-    const users = await User.find(filter).sort({ _id: -1 });
-
-    if (users.length === 0) {
-      res
-        .status(404)
-        .json({ message: "No users found matching the search term." });
-      return;
-    }
-
-    res.status(200).json(users);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -308,6 +308,64 @@ export const toggleIsEnabled = async (
       message: `User ${user.isEnabled ? "enabled" : "disabled"} successfully`,
       isEnabled: user.isEnabled,
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const searchUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { query } = req.query;
+
+    if (!query || typeof query !== "string") {
+      res.status(400).json({ message: "Please provide a valid search query." });
+      return;
+    }
+
+    const filter = {
+      $or: [
+        { firstName: { $regex: new RegExp(query, "i") } },
+        { lastName: { $regex: new RegExp(query, "i") } },
+        { email: { $regex: new RegExp(query, "i") } },
+      ],
+    };
+
+    const users = await User.find(filter).sort({ _id: -1 }).select("-password");
+
+    if (users.length === 0) {
+      res
+        .status(404)
+        .json({ message: "No users found matching the search query." });
+      return;
+    }
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAllUsersIDs = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const users = await User.find(
+      {},
+      { firstName: 1, lastName: 1, _id: 1 }
+    ).lean();
+
+    if (!users || users.length === 0) {
+      res.status(404).json({ message: "No users found." });
+      return;
+    }
+
+    res.status(200).json(users);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
