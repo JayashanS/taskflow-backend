@@ -14,6 +14,7 @@ import {
   getUsersByFilter,
   toggleIsEnabled,
   searchUser,
+  checkEmail,
   getAllUsersIDs,
 } from "../controllers/userController";
 import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
@@ -43,7 +44,8 @@ router.post(
   checkAdminRole,
   toggleIsEnabled
 );
-router.post("/search", searchUser);
+router.get("/search", searchUser);
+router.post("/check-email", checkEmail);
 router.get("/id", getAllUsersIDs);
 
 export default router;

@@ -128,25 +128,22 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const user: IUser | null = await User.findOne({ email });
 
-    if (user) {
+    if (!user) {
+      res.status(400).json({ message: "Invalid email or password" });
+    } else {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         res.status(400).json({ message: "Invalid email or password" });
+      } else {
+        const expiresIn = "1h";
+        const token = jwt.sign(
+          { email: user.email, role: user.role },
+          process.env.JWT_SECRET as string,
+          { expiresIn }
+        );
+
+        res.json({ token, expiresIn });
       }
-
-      const expiresIn = "1h";
-
-      const token = jwt.sign(
-        { email: user.email, role: user.role },
-        process.env.JWT_SECRET as string,
-        {
-          expiresIn,
-        }
-      );
-
-      res.json({ token });
-    } else {
-      res.status(400).json({ message: "Invalid email or password" });
     }
   } catch (error) {
     console.error("Login error:", error);
@@ -327,20 +324,21 @@ export const searchUser = async (
   try {
     const { query } = req.query;
 
-    if (!query || typeof query !== "string") {
-      res.status(400).json({ message: "Please provide a valid search query." });
-      return;
+    let filter = {};
+    if (query && typeof query === "string") {
+      filter = {
+        $or: [
+          { firstName: { $regex: new RegExp(query, "i") } },
+          { lastName: { $regex: new RegExp(query, "i") } },
+          { email: { $regex: new RegExp(query, "i") } },
+        ],
+      };
     }
 
-    const filter = {
-      $or: [
-        { firstName: { $regex: new RegExp(query, "i") } },
-        { lastName: { $regex: new RegExp(query, "i") } },
-        { email: { $regex: new RegExp(query, "i") } },
-      ],
-    };
-
-    const users = await User.find(filter).sort({ _id: -1 }).select("-password");
+    const users = await User.find(filter)
+      .limit(10)
+      .select("_id firstName lastName email")
+      .sort({ _id: -1 });
 
     if (users.length === 0) {
       res
@@ -351,7 +349,6 @@ export const searchUser = async (
 
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error searching users:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -375,5 +372,24 @@ export const getAllUsersIDs = async (
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const checkEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      res.status(400).json({ message: "Email is already taken" });
+    } else {
+      res.status(200).json({ message: "Email is available" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server error, please try again later." });
   }
 };

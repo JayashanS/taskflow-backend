@@ -10,17 +10,28 @@ import {
   deleteTask,
   updateTask,
 } from "../controllers/taskController";
+import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
-router.post("/", createTask);
-router.post("/toggle/:taskId", toggleIsEnabled);
-router.post("/update-user/:taskId", updateAssignedUser);
-router.patch("/complete/:taskId", markTaskAsCompleted);
-router.get("/filter", getTasks);
-router.get("/filter/user/:email", getTasksByUserEmail);
+router.post("/", authenticateJWT, checkAdminRole, createTask);
+router.post(
+  "/toggle/:taskId",
+  authenticateJWT,
+  checkAdminRole,
+  toggleIsEnabled
+);
+router.post(
+  "/update-user/:taskId",
+  authenticateJWT,
+  checkAdminRole,
+  updateAssignedUser
+);
+router.patch("/complete/:taskId", authenticateJWT, markTaskAsCompleted);
+router.get("/filter", authenticateJWT, checkAdminRole, getTasks);
+router.get("/filter/user/:email", authenticateJWT, getTasksByUserEmail);
 router.post("/many", insertTasks);
-router.delete("/:taskId", deleteTask);
-router.put("/:taskId", updateTask);
+router.delete("/:taskId", authenticateJWT, checkAdminRole, deleteTask);
+router.put("/:taskId", authenticateJWT, checkAdminRole, updateTask);
 
 export default router;
