@@ -88,29 +88,35 @@ export const deleteAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
+export const resetPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { email, otp, password } = req.body;
+
   try {
     const existingUser: IUser | null = await User.findOne({ email });
 
-    if (existingUser) {
-      if (
-        !existingUser.otpExpiration ||
-        existingUser.otp !== otp ||
-        existingUser.otpExpiration < new Date()
-      ) {
-        res.status(400).json({ message: "Invalid or expired OTP." });
-      }
-
-      existingUser.password = await bcrypt.hash(password, 10);
-      existingUser.otp = null;
-      existingUser.otpExpiration = null;
-      await existingUser.save();
-
-      res.status(200).json({ message: "Password reset successfully." });
-    } else {
+    if (!existingUser) {
       res.status(404).json({ message: "User not found." });
+      return;
     }
+
+    if (
+      !existingUser.otpExpiration ||
+      existingUser.otp !== otp ||
+      existingUser.otpExpiration < new Date()
+    ) {
+      res.status(400).json({ message: "Invalid or expired OTP." });
+      return;
+    }
+
+    existingUser.password = await bcrypt.hash(password, 10);
+    existingUser.otp = null;
+    existingUser.otpExpiration = null;
+    await existingUser.save();
+
+    res.status(200).json({ message: "Password reset successfully." });
   } catch (error) {
     console.error("Error resetting password:", error);
     res.status(500).json({ message: "Internal server error" });

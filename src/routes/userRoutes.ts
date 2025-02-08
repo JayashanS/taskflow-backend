@@ -20,19 +20,29 @@ import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
-router.post("/", createUser);
-router.get("/all", getAllUsers);
-router.post("/invite", inviteUser);
+router.post("/", authenticateJWT, checkAdminRole, createUser);
+router.get("/all", authenticateJWT, checkAdminRole, getAllUsers);
+router.post("/invite", authenticateJWT, checkAdminRole, inviteUser);
 router.delete("/all", authenticateJWT, checkAdminRole, deleteAllUsers);
 router.post("/reset", resetPassword);
 router.post("/login", login);
-router.get("/all-from", getUsersWithPagination);
+router.get(
+  "/all-from",
+  authenticateJWT,
+  checkAdminRole,
+  getUsersWithPagination
+);
 router.post("/many", createMultipleUsers);
-router.put("/update/:id", updateUser);
-router.delete("/delete/:id", deleteUser);
-router.get("/all-ids", getAllUserIds);
-router.get("/filter", getUsersByFilter);
-router.post("/toggle/:userId", toggleIsEnabled);
+router.put("/update/:id", authenticateJWT, checkAdminRole, updateUser);
+router.delete("/delete/:id", authenticateJWT, checkAdminRole, deleteUser);
+router.get("/all-ids", authenticateJWT, checkAdminRole, getAllUserIds);
+router.get("/filter", authenticateJWT, checkAdminRole, getUsersByFilter);
+router.post(
+  "/toggle/:userId",
+  authenticateJWT,
+  checkAdminRole,
+  toggleIsEnabled
+);
 router.post("/search", searchUser);
 router.get("/id", getAllUsersIDs);
 
