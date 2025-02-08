@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Task from "../models/taskModel";
+import User from "../models/userModel";
 
 export const createTask = async (req: Request, res: Response) => {
   const { taskName, description, startDate, endDate, assignedUser, isEnabled } =
@@ -56,6 +57,7 @@ export const updateAssignedUser = async (req: Request, res: Response) => {
 
 export const markTaskAsCompleted = async (req: Request, res: Response) => {
   const { taskId } = req.params;
+  const { completionDate } = req.body;
 
   try {
     const task = await Task.findById(taskId);
@@ -63,7 +65,13 @@ export const markTaskAsCompleted = async (req: Request, res: Response) => {
       res.status(404).json({ error: "Task not found" });
       return;
     }
-    task.completionDate = new Date();
+
+    if (completionDate) {
+      task.completionDate = new Date(completionDate);
+    } else {
+      task.completionDate = undefined;
+    }
+
     await task.save();
     res.status(200).json(task);
   } catch (error) {
@@ -105,6 +113,116 @@ export const getTasks = async (req: Request, res: Response) => {
 
     if (userId) {
       filter.assignedUser = userId as string;
+    }
+
+    if (status) {
+      if (status === "inProgress") {
+        filter.completionDate = { $exists: false };
+      } else if (status === "completed") {
+        filter.completionDate = { $exists: true };
+      }
+    }
+
+    const tasks = await Task.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "assignedUser",
+          foreignField: "_id",
+          as: "assignedUserDetails",
+        },
+      },
+      {
+        $unwind: "$assignedUserDetails",
+      },
+      {
+        $addFields: {
+          assignedUserName: {
+            $concat: [
+              "$assignedUserDetails.firstName",
+              " ",
+              "$assignedUserDetails.lastName",
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          assignedUserDetails: 0,
+        },
+      },
+      {
+        $sort: { _id: -1 },
+      },
+    ]);
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+export const getTasksByUserEmail = async (
+  req: Request<
+    { email: string },
+    {},
+    {},
+    {
+      taskName?: string;
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+    }
+  >,
+  res: Response
+) => {
+  try {
+    const { taskName, startDate, endDate, status } = req.query;
+    const userEmail = req.params.email;
+
+    if (!userEmail) {
+      res.status(400).json({ message: "Email is required" });
+      return;
+    }
+
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const filter: any = {
+      assignedUser: user._id,
+    };
+
+    if (taskName) {
+      filter.taskName = { $regex: taskName, $options: "i" };
+    }
+
+    if (startDate || endDate) {
+      const dateFilter: any = {};
+
+      if (startDate) {
+        const start = new Date(startDate);
+        if (!isNaN(start.getTime())) {
+          dateFilter.$gte = start;
+        }
+      }
+
+      if (endDate) {
+        const end = new Date(endDate);
+        if (!isNaN(end.getTime())) {
+          dateFilter.$lte = end;
+        }
+      }
+
+      if (Object.keys(dateFilter).length > 0) {
+        filter.startDate = dateFilter;
+      }
     }
 
     if (status) {
