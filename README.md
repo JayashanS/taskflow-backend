@@ -24,6 +24,7 @@ npm install
 3. Create a `.env` file in the root directory with the following variables:
 ```
 PORT=5000                                     # Port on which the server will run (default: 5000, can be changed if needed)
+FE_PORT=4000                                  # Port for the frontend application (default: 4000, change if your frontend runs on a different port)
 MONGO_URI=mongodb://localhost:27017/taskflow  # Your MongoDB connection URI (use MongoDB Atlas URI if using cloud MongoDB)
 JWT_SECRET=your_jwt_secret                    # A secret string used to sign JWT tokens. Choose a secure string (e.g., 'mysecretkey123')
 EMAIL=your_email@example.com                  # Your email address used for sending emails (e.g., 'your_email@example.com')
