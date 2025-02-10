@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 
 const app: Application = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:4000" }));
+app.use(cors({ origin: `http://localhost:${process.env.FE_PORT}` }));
 
 console.log("Starting TaskFlow server and connecting to MongoDB...");
 mongoose

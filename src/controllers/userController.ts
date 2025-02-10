@@ -8,6 +8,39 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+export const createFirstUser = async (req: Request, res: Response) => {
+  const { firstName, lastName, email, mobileNumber, address, password, role } =
+    req.body;
+
+  try {
+    const userCount = await User.countDocuments();
+
+    if (userCount > 0) {
+      res.status(400).json({ error: "First user already created." });
+      return;
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      mobileNumber,
+      address,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    await user.save();
+    res
+      .status(201)
+      .json({ message: "First admin user created successfully", user });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "error" });
+  }
+};
+
 export const createUser = async (req: Request, res: Response) => {
   const { firstName, lastName, email, mobileNumber, address, password, role } =
     req.body;
@@ -21,8 +54,7 @@ export const createUser = async (req: Request, res: Response) => {
       mobileNumber,
       address,
       password: hashedPassword,
-      //role: userCount === 0 ? "admin" : "user",
-      role,
+      role: role,
     });
     await user.save();
     res.status(201).json(user);

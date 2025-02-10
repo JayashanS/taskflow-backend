@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  createFirstUser,
   createUser,
   inviteUser,
   getAllUsers,
@@ -21,6 +22,7 @@ import { authenticateJWT, checkAdminRole } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
+router.post("/create-first", createFirstUser);
 router.post("/", authenticateJWT, checkAdminRole, createUser);
 router.get("/all", authenticateJWT, checkAdminRole, getAllUsers);
 router.post("/invite", authenticateJWT, checkAdminRole, inviteUser);
