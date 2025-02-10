@@ -71,8 +71,7 @@ src/
 ```bash
 npm run dev
 ```
-3. The server will be available at `http://localhost:3000`
-
+3. The server will be available at `http://localhost:5000`
 
 ## License
 
