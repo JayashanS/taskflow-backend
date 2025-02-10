@@ -12,7 +12,7 @@ A backend service built with TypeScript, Express, and MongoDB, providing authent
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/JayashanS/taskflow-backend.git
 cd taskflow-backend
 ```
 
